@@ -9,9 +9,7 @@ import y2k.teaexample.TodoList.Model
 import y2k.teaexample.TodoList.Msg
 import y2k.teaexample.infrastrcture.*
 import y2k.virtual.ui.appCompatButton
-import y2k.virtual.ui.appCompatEditText
 import y2k.virtual.ui.appCompatTextView
-import y2k.virtual.ui.common.editableView
 import y2k.virtual.ui.linearLayout
 
 object TodoList : TeaComponent<Model, Msg> {
@@ -45,13 +43,11 @@ object TodoList : TeaComponent<Model, Msg> {
             padding = pad(all = 8)
             orientation = LinearLayout.VERTICAL
             nodes = {
-                editableView {
-                    onTextChanged = { dispatch(Msg.NewItemTextChanged(it.toString())) }
-                    text = model.newItem
-                    nodes = {
-                        appCompatEditText {
-                            singleLine = true
-                            hintCharSequence = "Enter text..." } } }
+                textField(
+                    text = model.newItem,
+                    onTextChanged = { dispatch(Msg.NewItemTextChanged(it)) }) {
+                    singleLine = true
+                    hintCharSequence = "Enter text..." }
                 appCompatButton {
                     onClickListener = View.OnClickListener { dispatch(Msg.AddClicked) }
                     textCharSequence = "Add" }

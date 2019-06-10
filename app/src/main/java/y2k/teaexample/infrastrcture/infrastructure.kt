@@ -12,6 +12,7 @@ import y2k.tea.TeaView
 import y2k.teaexample.TodoList
 import y2k.teaexample.TodoList.Model
 import y2k.virtual.ui.*
+import y2k.virtual.ui.common.editableView
 import y2k.virtual.ui.remote.HotReloadServer
 import java.io.Closeable
 
@@ -65,6 +66,20 @@ inline var ViewGroup_.nodes: () -> Unit
     set(value) {
         value()
     }
+
+fun textField(
+    text: String,
+    onTextChanged: (String) -> Unit,
+    config: AppCompatEditText_.() -> Unit
+) {
+    editableView {
+        this.onTextChanged = { onTextChanged(it.toString()) }
+        this.text = text
+        nodes = {
+            appCompatEditText(config)
+        }
+    }
+}
 
 class MainActivity : AppCompatActivity(), TeaView<Model> {
 
