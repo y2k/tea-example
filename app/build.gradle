@@ -18,6 +18,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     implementation 'com.github.y2k:tea:0.3.3'
+    implementation 'com.github.y2k:virtual-ui-lib:0.1'
     implementation 'org.nanohttpd:nanohttpd:2.3.1'
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
