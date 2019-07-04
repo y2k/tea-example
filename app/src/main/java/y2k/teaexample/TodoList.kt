@@ -20,7 +20,8 @@ object TodoList : TeaComponent<Model, Msg> {
         class TodoChanged(val items: List<String>) : Msg()
         class RemoveClicked(val text: String) : Msg()
         object AddClicked : Msg()
-        class TodoAddResult(val result: Either<Exception, Unit>) : Msg() }
+        class TodoAddResult(val result: Either<Exception, Unit>) : Msg()
+    }
 
     override fun initialize() = Model() to Cmd.none<Msg>()
 
@@ -32,7 +33,9 @@ object TodoList : TeaComponent<Model, Msg> {
         is Msg.NewItemTextChanged -> model.copy(newItem = msg.text) to Cmd.none()
         is Msg.TodoAddResult -> when (msg.result) {
             is Either.Left -> model to Effects.showToast("Не удалось добавить элемент")
-            is Either.Right -> model to Cmd.none() } }
+            is Either.Right -> model to Cmd.none()
+        }
+    }
 
     override fun sub() =
         Effects.subscribeCollections("todo-list")
@@ -47,12 +50,17 @@ object TodoList : TeaComponent<Model, Msg> {
                     text = model.newItem,
                     onTextChanged = { dispatch(Msg.NewItemTextChanged(it)) }) {
                     singleLine = true
-                    hintCharSequence = "Enter text..." }
+                    hintCharSequence = "Enter text..."
+                }
                 appCompatButton {
                     onClickListener = View.OnClickListener { dispatch(Msg.AddClicked) }
-                    textCharSequence = "Add" }
+                    textCharSequence = "Add"
+                }
                 staticListView(model.items) {
-                    itemView(it, dispatch) } } }
+                    itemView(it, dispatch)
+                }
+            }
+        }
 
     private fun UiContext.itemView(item: String, dispatch: (Msg) -> Unit) =
         linearLayout {
@@ -61,7 +69,12 @@ object TodoList : TeaComponent<Model, Msg> {
                     layoutParams = LinearLayout.LayoutParams(0, -2, 1f)
                     padding = pad(vertical = 20)
                     textSizeFloat = 16f
-                    textCharSequence = item }
+                    textCharSequence = item
+                }
                 appCompatButton {
                     onClickListener = View.OnClickListener { dispatch(Msg.RemoveClicked(item)) }
-                    textCharSequence = "Delete" } } } }
+                    textCharSequence = "Delete"
+                }
+            }
+        }
+}
