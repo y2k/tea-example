@@ -1,9 +1,17 @@
 package y2k.teaexample.infrastrcture
 
 import android.app.Application
+import android.content.Context
 import android.os.Bundle
+import android.util.AttributeSet
+import android.view.View
+import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.ListAdapter
+import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -15,6 +23,7 @@ import y2k.virtual.ui.*
 import y2k.virtual.ui.common.editableView
 import y2k.virtual.ui.remote.HotReloadServer
 import java.io.Closeable
+import kotlin.properties.Delegates
 
 sealed class Either<out L, out R> {
     class Left<T>(val value: T) : Either<T, Nothing>()
@@ -128,5 +137,93 @@ class App : Application() {
 
     companion object {
         lateinit var instance: Application
+    }
+}
+
+object RecycleViewModule {
+
+    fun <T> flatRecyclerView(f: MyRecycleView_<T>.() -> Unit): MyRecycleView_<T> {
+        val x = MyRecycleView_<T>()
+        globalViewStack.push(x)
+        x.f()
+        globalViewStack.pop()
+        globalViewStack.lastOrNull()?.children?.add(x)
+        return x
+    }
+
+    @Suppress("ClassName", "unused")
+    @VirtualNodeMarker
+    class MyRecycleView_<T> : RecyclerView_() {
+
+        var items: List<T>
+            @Deprecated("", level = DeprecationLevel.HIDDEN)
+            get() = throw IllegalStateException()
+            set(value) = updateProp(false, 3000, value)
+
+        var idMapping: (T) -> Any?
+            @Deprecated("", level = DeprecationLevel.HIDDEN)
+            get() = throw IllegalStateException()
+            set(value) = updateProp(false, 3001, value)
+
+        var mapping: (T) -> VirtualNode
+            @Deprecated("", level = DeprecationLevel.HIDDEN)
+            get() = throw IllegalStateException()
+            set(value) = updateProp(false, 3002, value)
+
+        override fun createEmpty(context: Context) = MyRecycleView<Any>(context)
+
+        @Suppress("UNCHECKED_CAST")
+        override fun update(p: Property, a: View) {
+            val view = a as MyRecycleView<T>
+            when (p.propId) {
+                3000 -> view.items = p.value as List<T>
+                3001 -> view.idMapping = p.value as (T) -> Any?
+                3002 -> view.mapping = p.value as (T) -> VirtualNode
+            }
+        }
+    }
+
+    class MyRecycleView<T> @JvmOverloads constructor(
+        context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
+    ) : RecyclerView(context, attrs, defStyleAttr) {
+
+        private val adapter = object : ListAdapter<T, ViewHolder>(
+            object : DiffUtil.ItemCallback<T>() {
+                override fun areItemsTheSame(oldItem: T, newItem: T) = idMapping(oldItem) == idMapping(newItem)
+                override fun areContentsTheSame(oldItem: T, newItem: T) = oldItem == newItem
+            }
+        ) {
+            override fun getItemCount(): Int = items.size
+
+            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder =
+                object : ViewHolder(VirtualHostView(parent.context)) {}
+
+            override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+                val vh = holder.itemView as VirtualHostView
+                vh.update(mkNode {
+                    frameLayout {
+                        layoutParams = ViewGroup.LayoutParams(-1, -2)
+                        mapping(items[position])
+                    }
+                })
+            }
+        }
+
+        var items: List<T> by Delegates.observable(emptyList()) { _, _, _ ->
+            adapter.notifyDataSetChanged()
+        }
+
+        var idMapping: (T) -> Any? by Delegates.observable({ x -> x }) { _, _, _ ->
+            adapter.notifyDataSetChanged()
+        }
+
+        var mapping: (T) -> VirtualNode by Delegates.observable({ _ -> TODO() }) { _, _, _ ->
+            adapter.notifyDataSetChanged()
+        }
+
+        init {
+            layoutManager = LinearLayoutManager(null)
+            setAdapter(adapter)
+        }
     }
 }

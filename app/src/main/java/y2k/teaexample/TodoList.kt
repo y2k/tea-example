@@ -8,6 +8,7 @@ import y2k.tea.map
 import y2k.teaexample.TodoList.Model
 import y2k.teaexample.TodoList.Msg
 import y2k.teaexample.infrastrcture.*
+import y2k.teaexample.infrastrcture.RecycleViewModule.flatRecyclerView
 import y2k.virtual.ui.appCompatButton
 import y2k.virtual.ui.appCompatTextView
 import y2k.virtual.ui.linearLayout
@@ -27,7 +28,7 @@ object TodoList : TeaComponent<Model, Msg> {
 
     override fun update(model: Model, msg: Msg) = when (msg) {
         Msg.AddClicked -> model.copy(newItem = "") to
-                Effects.add("todo-list", mapOf("text" to model.newItem)).map { Msg.TodoAddResult(it) }
+            Effects.add("todo-list", mapOf("text" to model.newItem)).map { Msg.TodoAddResult(it) }
         is Msg.RemoveClicked -> model to Effects.remove("todo-list") { it.whereEqualTo("text", msg.text) }
         is Msg.TodoChanged -> model.copy(items = msg.items) to Cmd.none()
         is Msg.NewItemTextChanged -> model.copy(newItem = msg.text) to Cmd.none()
@@ -56,8 +57,9 @@ object TodoList : TeaComponent<Model, Msg> {
                     onClickListener = View.OnClickListener { dispatch(Msg.AddClicked) }
                     textCharSequence = "Add"
                 }
-                staticListView(model.items) {
-                    itemView(it, dispatch)
+                flatRecyclerView<String> {
+                    items = model.items
+                    mapping = { itemView(it, dispatch) }
                 }
             }
         }
